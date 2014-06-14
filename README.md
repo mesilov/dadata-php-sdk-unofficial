@@ -41,11 +41,19 @@ catch (DaData\DaDataException $e)
 print('</pre>');
 ```
 ## Installation ##
-Add a string in your composer.json file
+Update your composer.json file
 ``` json
     "require": {
         "mesilov/dadata-php-sdk-unofficial":"dev-master"
     },
+    "repositories": [
+        {
+
+		"url": "https://github.com/mesilov/dadata-php-sdk-unofficial",
+		"type": "vcs"
+
+        }
+    ]    
 ```
 ## Support ##
 email: <mesilov.maxim@gmail.com>  
