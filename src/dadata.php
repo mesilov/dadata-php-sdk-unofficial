@@ -322,7 +322,7 @@ class DaData
 	 * helper method to normalize full name of user
 	 * @param $fullName
 	 * @param bool $isStrict - if true when method fail they will throw exception if normalization have an errors
-	 * @return array
+	 * @return array | null
 	 * @throws DaDataException
 	 */
 	public function normalizeFullName($fullName, $isStrict = true)
