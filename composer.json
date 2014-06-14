@@ -1,0 +1,20 @@
+{
+    "name": "mesilov/dadata-php-sdk-unofficial",
+    "description": "A PHP library for the DaData.ru REST API.",
+    "keywords": ["DaData", "php", "REST", "api"],
+    "type": "library",
+    "homepage": "https://github.com/mesilov/dadata-php-sdk-unofficial",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Maxim Mesilov",
+            "homepage": "https://github.com/mesilov/"
+        }
+    ],
+    "require": {
+        "php": ">=5.2.0"
+    },
+    "autoload": {
+        "classmap": ["DaData"]
+    }
+}
