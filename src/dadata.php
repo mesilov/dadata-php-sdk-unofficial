@@ -8,16 +8,31 @@ class DaData
 	 * SDK version
 	 */
 	const VERSION = '1.0';
-	const QC_PASSED = 0;
-	const QC_FAILED = 1;
-	const GENDER_MALE = "М";
-	const GENDER_FEMALE = "Ж";
-	const GENDER_UNKNOWN = "НД";
 
-	/*
-	 * @todo сделать отдельным методом хранение URL для подключения к API
+	/**
+	 * quality passed flag in API-response
 	 */
+	const QC_PASSED = 0;
 
+	/**
+	 * quality failed flag in API-response
+	 */
+	const QC_FAILED = 1;
+
+	/**
+	 * gender male flag in API-response
+	 */
+	const GENDER_MALE = "М";
+
+	/**
+	 * gender male flag in API-response
+	 */
+	const GENDER_FEMALE = "Ж";
+
+	/**
+	 * gender unknown flag in API-response
+	 */
+	const GENDER_UNKNOWN = "НД";
 
 	/**
 	 * access token
@@ -37,7 +52,7 @@ class DaData
 	protected $methodParameters = null;
 
 	/**
-	 * request info data structure акщь curl_getinfo function
+	 * request info data structure from curl_getinfo function
 	 * @var array
 	 */
 	protected $requestInfo = null;
@@ -48,28 +63,60 @@ class DaData
 	protected $isSaveRawResponse = false;
 
 	/**
-	 * @var array raw response from bitrix24
+	 * @var array raw response from DaData API
 	 */
 	protected $rawResponse = null;
 
+	/**
+	 * @var string DaData API URL endpoint
+	 */
+	protected $url = 'https://dadata.ru/api/v2/clean';
 
 	/**
 	 * Create a object to work with Bitrix24 REST API service
-	 * @param bool $isSaveRawResponse - if true raw response from bitrix24 will be available from method getRawResponse, this is debug mode
+	 * @param bool $accessToken - API-KEY from DaData service
 	 * @throws DaDataException
 	 * @return DaData
 	 */
-	public function __construct($isSaveRawResponse = false)
+	public function __construct($accessToken)
 	{
 		if (!extension_loaded('curl'))
 		{
 			throw new DaDataException('cURL extension must be installed to use this library');
 		}
-		if(!is_bool($isSaveRawResponse))
+		elseif(!extension_loaded('json'))
 		{
-			throw new DaDataException('isSaveRawResponse flag must be boolean');
+			throw new DaDataException('json extension must be installed to use this library');
+		}elseif(is_null($accessToken))
+		{
+			throw new DaDataException('accessToken is null');
 		}
-		$this->isSaveRawResponse = $isSaveRawResponse;
+
+		$this->setAccessToken($accessToken);
+	}
+
+	/**
+	 * Set DaData API URL endpoint
+	 * @param string $url - DaData API URL endpoint
+	 * @throws DaDataException
+	 * @return null
+	 */
+	public function setUrl($url)
+	{
+		if(is_null($url))
+		{
+			throw new DaDataException('cURL extension must be installed to use this library');
+		}
+		$this->url = $url;
+	}
+
+	/**
+	 * Get DaData API URL endpoint
+	 * @return string | null
+	 */
+	public function getUrl()
+	{
+		return $this->url;
 	}
 
 	/**
@@ -78,7 +125,7 @@ class DaData
 	 * @throws DaDataException
 	 * @return true;
 	 */
-	public function setAccessToken($accessToken)
+	protected function setAccessToken($accessToken)
 	{
 		if(!empty($accessToken))
 		{
@@ -95,7 +142,7 @@ class DaData
 	 * Get access token
 	 * @return string | null
 	 */
-	public function getAccessToken()
+	protected function getAccessToken()
 	{
 		return $this->accessToken;
 	}
@@ -128,6 +175,29 @@ class DaData
 		return $this->methodParameters;
 	}
 
+	/**
+	 * Set flag to save raw response from api request
+	 * @param $isSaveRawResponse
+	 * @throws DaDataException
+	 * @return null
+	 */
+	public function setIsSaveRawResponse($isSaveRawResponse)
+	{
+		if(!is_bool($isSaveRawResponse))
+		{
+			throw new DaDataException('isSaveRawResponse must be a boolean type');
+		}
+		$this->isSaveRawResponse = $isSaveRawResponse;
+	}
+
+	/**
+	 * get flag to save raw response from api request
+	 * @return bool
+	 */
+	public function getIsSaveRawResponse()
+	{
+		return $this->isSaveRawResponse;
+	}
 	/**
 	 * Execute a request API to dadata using cURL
 	 * @param $arData
@@ -208,14 +278,15 @@ class DaData
 		{
 			throw new DaDataException('access token not found, you must call setAccessToken method before');
 		}
+		elseif(is_null($this->getUrl()))
+		{
+			throw new DaDataException('API URL not found, you must call setUrl method before or do not call them, and API url will be init by default');
+		}
 
-		$url = 'https://dadata.ru/api/v1/clean';
 		// save method parameters for debug
 		$this->methodParameters = $arUsers;
 
-
-		$requestResult = $this->executeRequest($arUsers, $url, $this->accessToken);
-
+		$requestResult = $this->executeRequest($arUsers, $this->url, $this->accessToken);
 		if (array_key_exists('error', $requestResult))
 		{
 			$errName = '';
@@ -233,24 +304,25 @@ class DaData
 	}
 
 	/**
-	 * Get raw response from Bitrix24 before json_decode call, method available only in debug mode.
-	 * To activate debug mode you must before set to true flag isSaveRawResponse in class construct
+	 * Get raw response from DaData API before json_decode call, method available only in debug mode.
+	 * To activate debug mode you must before set to true flag isSaveRawResponse in call method setIsSaveRawResponse with true argument
 	 * @throws DaDataException
-	 * @return string
+	 * @return string | null
 	 */
 	public function getRawResponse()
 	{
 		if(false === $this->isSaveRawResponse)
 		{
-			throw new DaDataApiException('you must before set to true flag isSaveRawResponse in class construct');
+			throw new DaDataApiException('to activate debug mode you must before set to true flag isSaveRawResponse in call method setIsSaveRawResponse');
 		}
 		return $this->rawResponse;
 	}
 
 	/**
+	 * helper method to normalize full name of user
 	 * @param $fullName
-	 * @param bool $isStrict
-	 * @return null
+	 * @param bool $isStrict - if true when method fail they will throw exception if normalization have an errors
+	 * @return array
 	 * @throws DaDataException
 	 */
 	public function normalizeFullName($fullName, $isStrict = true)
